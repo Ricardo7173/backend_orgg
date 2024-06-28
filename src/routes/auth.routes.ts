@@ -1,4 +1,5 @@
 import { Router, RouterOptions } from 'express';
+import { authController } from '../controllers/auth.controller';
 
 class AuthRoutes{
 
@@ -7,13 +8,12 @@ class AuthRoutes{
 
     //Inicializa
     constructor(){
-
+        this.router = Router();
+        this.config()
     }
 
     config(){
-        this.router.get('/', (req, res) =>{
-            res.send('Invocando Autenticación')
-        })
+        this.router.post('/', authController.iniciarSesion);
     }
 }
 
