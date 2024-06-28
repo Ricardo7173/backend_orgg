@@ -9,51 +9,44 @@ class UsuarioController {
 
   public async list(req: Request, res: Response) {
     try {
-      return res.json({ message: "Listado de Usuario", code: 0 });
+      const usuarios = await model.list();
+      return res.json({ message: "Listado de Usuarios:", code: 0, data: usuarios });
     } catch (error: any) {
       return res.status(500).json({ message: `${error.message}` });
     }
   }
 
-
   public async add(req: Request, res: Response) {
     try {
-        
-      const newUser = req.body;
-      var encytedText = await utils.hashPassword(newUser.password);
-      newUser.password = encytedText;
-      await model.add(newUser);
-      return res.json({ message: "Usuario agregado", code: 0 });
-      
-      
-  } catch (error: any) {
-      if (error.message === "El usuario con este email ya existe") {
-          return res.status(400).json({ message: error.message });
+      const { email, password, role } = req.body;
+      if (validator.isEmpty(email.trim()) || validator.isEmpty(password.trim()) || validator.isEmpty(role.trim())) {
+        return res.status(400).json({ message: "Todos los campos son requeridos", code: 1 });
       }
-      return res.status(500).json({ message: error.message });
+      await model.add({ email, password, role });
+      return res.json({ message: "Usuario agregado exitosamente", code: 0 });
+    } catch (error: any) {
+      return res.status(500).json({ message: `${error.message}` });
+    }
   }
-  }
-
 
   public async update(req: Request, res: Response) {
     try {
-      const userUpdate = req.body;
-      var encytedText = await utils.hashPassword(userUpdate.password);
-      userUpdate.password = encytedText;
-      await model.update(userUpdate);
-      return res.json({ message: "Usuario actualizado", code: 0 });
-  } catch (error: any) {
-      if (error.message === "El usuario con este email no existe") {
-          return res.status(404).json({ message: error.message });
-      }
-      return res.status(500).json({ message: error.message });
+      const { email, password } = req.body;
+      await model.update({ email, password });
+      return res.json({ message: "Usuario actualizado exitosamente", code: 0 });
+    } catch (error: any) {
+      return res.status(500).json({ message: `${error.message}` });
+    }
   }
-  }
-
 
   public async delete(req: Request, res: Response) {
     try {
-      return res.json({ message: "Eliminación de Usuario", code: 0 });
+      const { email } = req.body;
+      if (validator.isEmpty(email.trim())) {
+        return res.status(400).json({ message: "El email es requerido", code: 1 });
+      }
+      await model.delete(email);
+      return res.json({ message: "Usuario eliminado exitosamente", code: 0 });
     } catch (error: any) {
       return res.status(500).json({ message: `${error.message}` });
     }

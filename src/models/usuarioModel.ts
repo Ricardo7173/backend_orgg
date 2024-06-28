@@ -1,31 +1,32 @@
 import pool from '../config/connection';
+import { utils } from "../utils/utils";
 
 
 class UsuarioModelo {
-
-
     public async list() {
-        const result = await pool.then( async (connection) => {
+        const result = await pool.then(async (connection) => {
             return await connection.query(
-                " SELECT u.email, u.password, u.role "
-                + " FROM tbl_usuario u ")  });
+                "SELECT u.email, u.password, u.role FROM tbl_usuario u"
+            );
+        });
         return result;
     }
 
-
     public async add(usuario: any) {
-        // Verificar si el usuario ya existe
-        const existingUser = await pool.then(async (connection) => {
-            return await connection.query(
-                "SELECT * FROM tbl_usuario WHERE email = ?", [usuario.email]
+        const emailExists = await pool.then(async (connection) => {
+            const result = await connection.query(
+                "SELECT COUNT(*) as count FROM tbl_usuario WHERE email = ?", [usuario.email]
             );
+            return result[0].count > 0;
         });
 
-        if (existingUser.length > 0) {
-            throw new Error("El usuario con este email ya existe");
+        if (emailExists) {
+            throw new Error('No se puede agregar un email ya usado.');
         }
 
-        // Si el usuario no existe, agregarlo
+        const encryptedText = await utils.hashPassword(usuario.password);
+        usuario.password = encryptedText;
+
         const result = await pool.then(async (connection) => {
             return await connection.query(
                 "INSERT INTO tbl_usuario SET ?", [usuario]
@@ -34,43 +35,43 @@ class UsuarioModelo {
         return result;
     }
 
-
     public async update(usuario: any) {
-        const existingUser = await pool.then(async (connection) => {
-            return await connection.query(
-                "SELECT * FROM tbl_usuario WHERE email = ?", [usuario.email]
+        const userExists = await pool.then(async (connection) => {
+            const result = await connection.query(
+                "SELECT COUNT(*) as count FROM tbl_usuario WHERE email = ?", [usuario.email]
             );
+            return result[0].count > 0;
         });
 
-        if (existingUser.length === 0) {
-            throw new Error("El usuario con este email no existe");
+        if (!userExists) {
+            throw new Error('El usuario no existe en el registro.');
         }
 
-        const update = "UPDATE tbl_usuario SET password='" + usuario.password +
-            "' where email='" + usuario.email + "'";
-        console.log("Update " + update);
+        const encryptedText = await utils.hashPassword(usuario.password);
+        usuario.password = encryptedText;
+
+        const update = "UPDATE tbl_usuario SET password = ? WHERE email = ?";
         const result = await pool.then(async (connection) => {
-            return await connection.query(update);
+            return await connection.query(update, [usuario.password, usuario.email]);
         });
         return result;
     }
 
-
     public async delete(email: string) {
-        const existingUser = await pool.then(async (connection) => {
-            return await connection.query(
-                "SELECT * FROM tbl_usuario WHERE email = ?", [email]
+        const userExists = await pool.then(async (connection) => {
+            const result = await connection.query(
+                "SELECT COUNT(*) as count FROM tbl_usuario WHERE email = ?", [email]
             );
+            return result[0].count > 0;
         });
 
-        if (existingUser.length === 0) {
-            throw new Error("El usuario con este email no existe");
+        if (!userExists) {
+            throw new Error('El usuario no existe en el registro.');
         }
 
-        console.log('Eliminando');
         const result = await pool.then(async (connection) => {
             return await connection.query(
-                "DELETE FROM tbl_usuario where email= ?", [email]
+                "DELETE FROM tbl_usuario WHERE email = ?", [email]
             );
         });
         return result;

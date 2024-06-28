@@ -1,0 +1,6 @@
+projectKey=SonarRich
+serverUrl=http://localhost:9000
+serverVersion=10.6.0.92116
+dashboardUrl=http://localhost:9000/dashboard?id=SonarRich
+ceTaskId=8593d179-862a-463c-8068-96c0a5b74cac
+ceTaskUrl=http://localhost:9000/api/ce/task?id=8593d179-862a-463c-8068-96c0a5b74cac
